@@ -5,67 +5,65 @@ open Fable.React
 open Fable.React.Props
 open Fulma
 open Fable.FontAwesome
-open Fable.Validation.Core
 
+type ValidationErrors =
+    {
+      Email : string list
+      Password : string list
+    } with
+    member this.HasErrors =
+        not (this.Email = List.empty && this.Password = List.empty)
 
-type ValidModel = {
-        email : string
-        password : string
-      } with
-      static member Email = "Email"
-      static member Password = "Password"
+    static member empty = { Email = []; Password = []}
 
 type Model =
     {
       Email : string
       Password : string
-      ValidationErrors : Map<string, string List>
+      Errors : ValidationErrors
       ModalState: bool
 }
 
 type Msg =
     | ChangeEmail of string
     | ChangePassword of string
-    | UpdateValidationErrors
+    | ValidateEmail
+    | ValidatePassword
     | Submit
     | Clear
     | ToggleModal
 
-let init _ = { Email = ""; Password = "" ; ValidationErrors = Map.empty; ModalState = false}, Cmd.ofMsg UpdateValidationErrors
+let init _ = { Email = ""; Password = "" ; Errors = ValidationErrors.empty; ModalState = false}, Cmd.none
 
-let validateModel model =
-      fast <| fun t ->
-        {
-          email =     t.Test ValidModel.Email model.Email
-                      |> t.Trim
-                      |> t.IsMail "Should be a valid email"
-                      |> t.End
+let validateEmail email =
+      [ System.String.IsNullOrWhiteSpace(email), "Field Email cannot be empty"
+        email.Trim().Length < 5, "An Email must at least have 5 characters"
+        Seq.contains ('@') email |> not, "An Email should contain a '@' symbol"]
+      |> List.filter fst
+      |> List.map snd
 
-          password =  t.Test ValidModel.Password model.Password // call `t.Test fieldName value` to initialize field state
-                      |> t.Trim // pipe the field state to rules
-                      |> t.IsValid (Seq.head >> System.Char.IsUpper) "A Password should start with a captial" // custom validation
-                      |> t.Match (System.Text.RegularExpressions.Regex(".[a-z]")) "A should have some lowercase charactors" // regex validation
-                      |> t.NotBlank "Password cannot be blank" // rules can contain params and a generic error message
-                      |> t.MaxLen 20 "Max lenght is {len}"
-                      |> t.MinLen 8 "Min length is {len}"
-                      |> t.End // call `t.End` to unwrap the validated
-                               // and transformed value,
-                               // you can use the transformed values to create a new model
-        }
+
+let validatePassword password =
+      [ System.String.IsNullOrWhiteSpace(password), "A Password cannot be empty"
+        password.Trim().Length < 5, "Field Password must at least have 5 characters"
+        Seq.exists (System.Char.IsUpper) password |> not, "A Password should contain a captial"]
+      |> List.filter fst
+      |> List.map snd
 
 let private update msg model =
     match msg with
     | ChangePassword newPassword ->
-        { model with Password = newPassword }, Cmd.ofMsg UpdateValidationErrors
+        { (model:Model) with Password = newPassword }, Cmd.ofMsg ValidatePassword
     | ChangeEmail newEmail ->
-        { model with Email = newEmail }, Cmd.ofMsg UpdateValidationErrors
-    | UpdateValidationErrors ->
-        let result = validateModel model
-        match result with
-        | Ok _ ->
-          { model with ValidationErrors = Map.empty }, Cmd.none
-        | Error result ->
-          { model with ValidationErrors = result}, Cmd.none
+        { model with Email = newEmail }, Cmd.ofMsg ValidateEmail
+    | ValidatePassword  ->
+        let passwordErrors = validatePassword model.Password
+        let errors = { model.Errors with Password = passwordErrors }
+        { model with Errors = errors  }, Cmd.none
+    | ValidateEmail  ->
+        let emailErrors = validateEmail model.Email
+        let errors = { model.Errors with Email = emailErrors }
+        { model with Errors = errors  }, Cmd.none
     | Submit ->
         { model with ModalState = not model.ModalState }, Cmd.none
     | Clear ->
@@ -78,33 +76,24 @@ let navBar =
             [  Navbar.End.div [ ]
 
                     [ Control.div [ ]
-                        [ Button.a [ Button.Props [ Href "https://github.com/CraigChamberlain/fable-validation-example" ] ]
+                        [ Button.a [ Button.Props [ Href "https://github.com/CraigChamberlain/fable-validation-example-no-deps" ] ]
                             [ Icon.icon [ ] [ Fa.i [ Fa.Brand.Github ] [] ]
                               span [] [ str "Github" ]
                             ]
                          ]
 
                       Control.div [ ]
-                        [ a [ Href "https://www.gitpod.io/#https://github.com/CraigChamberlain/fable-validation-example"  ]
+                        [ a [ Href "https://www.gitpod.io/#https://github.com/CraigChamberlain/fable-validation-example-no-deps"  ]
                               [Image.image [ Image.Props [ Alt "Gitpod" ]]
                                    [ img [ Src "https://gitpod.io/button/open-in-gitpod.svg" ]  ]
 
                       ]]]]
 
-
-// Exceptions are burried inside the view and so this should empty map should be guarded against.
-let guardEmptyMap key unsafeMap =
-    if Map.isEmpty unsafeMap || not (Map.containsKey key unsafeMap)
-    then []
-    else unsafeMap.[key]
-
 let private emailInput model dispatch =
-
-  let errors = guardEmptyMap ValidModel.Email model.ValidationErrors
-
+  let errors = model.Errors.Email
   Field.div [ ]
             [ Label.label [ ]
-                [ str ValidModel.Email ]
+                [ str "Email" ]
               Control.div [ Control.HasIconLeft
                             Control.HasIconRight ]
                 [ Input.email [ Input.OnChange (fun ev -> dispatch (ChangeEmail ev.Value))
@@ -130,10 +119,10 @@ let private emailInput model dispatch =
             ]
 
 let private passwordInput model dispatch =
-       let errors = guardEmptyMap ValidModel.Password model.ValidationErrors
+       let errors = model.Errors.Password
        Field.div [ ]
             [ Label.label [ ]
-                [ str ValidModel.Password ]
+                [ str "Password" ]
               Control.div [ Control.HasIconLeft
                             Control.HasIconRight ]
                 [ Input.password
@@ -204,7 +193,7 @@ let private view model dispatch =
                                             Button.Props
                                               [ Type "button"
                                                 OnClick (fun _ -> dispatch Submit)
-                                                Disabled <| not (Map.isEmpty model.ValidationErrors)
+                                                Disabled <| model.Errors.HasErrors
                                               ]
                                             ]
                                           [ str "Submit" ]
