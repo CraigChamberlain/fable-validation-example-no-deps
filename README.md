@@ -1,12 +1,6 @@
-# Fable.Validation Example
+# Fable Form Validation Example (Without Validation Library)
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/CraigChamberlain/fable-validation-example)
-
-The [Fable.Validation](https://github.com/zaaack/fable-validation)
-paket is used in this example to demonstrate a form validation and
-styling in an Elmish workflow.
-
-In particular see the validateModel function in src/app.fs.
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/CraigChamberlain/fable-validation-example-no-deps)
 
 It is modelled after [Zaid-Ajaj's](https://github.com/Zaid-Ajaj) [elmish-login-flow-validation](https://github.com/Zaid-Ajaj/elmish-login-flow-validation)
 Which uses a previous version of Fable and other tools.
