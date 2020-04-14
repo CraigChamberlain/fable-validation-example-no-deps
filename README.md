@@ -2,10 +2,9 @@
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/CraigChamberlain/fable-validation-example-no-deps)
 
-It is modelled after [Zaid-Ajaj's](https://github.com/Zaid-Ajaj) [elmish-login-flow-validation](https://github.com/Zaid-Ajaj/elmish-login-flow-validation)
-Which uses a previous version of Fable and other tools.
+It is modelled after [Zaid-Ajaj's](https://github.com/Zaid-Ajaj) [elmish-login-flow-validation](https://github.com/Zaid-Ajaj/elmish-login-flow-validation) which is a morecomprehensive example accross several files and mimics a login in addition to form validation.
 
-This project is built upon the [Fulma Minimal Template](https://fulma.github.io/Fulma/#template)
+This project aims to have be simpler to digest and is built upon the [Fulma Minimal Template](https://fulma.github.io/Fulma/#template).  At the time of writting, it also uses a more upto date version of Fable, Fake, Paket etc.
 
 ## How to use ?
 
